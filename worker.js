@@ -1,0 +1,267 @@
+export default {
+  async fetch() {
+    return new Response(HTML, {headers: {"content-type": "text/html; charset=utf-8"}});
+  }
+};
+const HTML = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة استبيان رضا العملاء</title>
+<style>
+:root{--bg:#f4f8f7;--card:#fff;--tx:#17302b;--mut:#667a75;--br:#cfdcd8;--pr:#0f7a5c;--prt:#fff;--st:#e3a50b;--er:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10201d;--card:#182c28;--tx:#e6f1ee;--mut:#93aaa4;--br:#2c4540;--pr:#2fb68c;--prt:#06231b;--st:#f0b93a;--er:#ff7a6b}}
+:root[data-theme="dark"]{--bg:#10201d;--card:#182c28;--tx:#e6f1ee;--mut:#93aaa4;--br:#2c4540;--pr:#2fb68c;--prt:#06231b;--st:#f0b93a;--er:#ff7a6b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Tahoma,"Segoe UI",Arial,sans-serif;font-size:15px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 12px;color:var(--pr)}
+.card{background:var(--card);border:1px solid var(--br);border-radius:12px;padding:16px;margin-bottom:16px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--pr);background:transparent;color:var(--pr);padding:8px 14px}
+button.on,button.primary{background:var(--pr);color:var(--prt)}
+button.danger{border-color:var(--er);color:var(--er);padding:3px 9px;font-size:13px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:12px 0}
+label.f{display:block;font-size:13px;color:var(--mut)}
+label.f b,.q b{color:var(--er)}
+input[type=text],input[type=tel],textarea,input[type=search]{width:100%;font:inherit;color:var(--tx);background:transparent;border:0;border-bottom:2px solid var(--br);padding:6px 2px;outline:0}
+input:focus,textarea:focus{border-bottom-color:var(--pr)}
+.q{margin:18px 0 6px;font-weight:600}
+.opts{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:4px}
+.opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+input[type=radio]{accent-color:var(--pr);width:18px;height:18px}
+.stars{display:flex;gap:4px;direction:ltr;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.stars span.s{font-size:30px;cursor:pointer;color:var(--br);line-height:1;user-select:none}
+.stars span.s.on{color:var(--st)}
+.stars .n{font-size:15px;color:var(--mut);margin-inline-start:8px}
+.msg{margin-top:10px;font-size:14px}
+.msg.err{color:var(--er)}.msg.ok{color:var(--pr)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar input{flex:1;min-width:160px;border:1px solid var(--br);border-radius:8px;padding:8px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th,td{border-bottom:1px solid var(--br);padding:7px 8px;text-align:right;white-space:nowrap}
+td.wrapc{white-space:normal;min-width:140px}
+th{background:var(--bg);position:sticky;top:0}
+.stat{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;color:var(--mut)}
+.stat b{color:var(--tx)}
+.hide{display:none}
+
+.auth-card{max-width:520px;margin:30px auto}.auth-card h2{font-size:18px;margin-top:0;color:var(--pr)}
+.auth-note{font-size:13px;color:var(--mut);margin:8px 0 14px}.auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+#appShell{display:none}#userBar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+#userEmail{font-size:13px;color:var(--mut);direction:ltr}button:disabled{opacity:.55;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="authPanel" class="card auth-card">
+<h2>تسجيل الدخول إلى لوحة استبيان رضا العملاء</h2>
+<div class="auth-note">أنشئ حسابًا أو سجّل الدخول. كل مستخدم مسجل يمكنه إضافة استبيانات، وستظهر التحديثات لجميع المستخدمين.</div>
+<div class="row">
+<label class="f">البريد الإلكتروني <b>*</b><input type="email" id="authEmail" autocomplete="username"></label>
+<label class="f">كلمة المرور <b>*</b><input type="password" id="authPassword" autocomplete="current-password"></label>
+</div>
+<div class="auth-actions"><button class="primary" id="loginBtn">تسجيل الدخول</button><button id="registerBtn">إنشاء حساب جديد</button></div>
+<div class="msg" id="authMsg"></div>
+</div>
+<div id="appShell"><div id="userBar"><span id="userEmail"></span><button id="logoutBtn">تسجيل الخروج</button></div>
+<h1>لوحة استبيان رضا العملاء</h1>
+<div class="tabs">
+  <button id="tabForm" class="on">إدخال استبيان جديد</button>
+  <button id="tabData">السجلات والتصدير</button>
+</div>
+
+<div id="viewForm" class="card">
+  <div class="opts" id="kind">
+    <label><input type="radio" name="kind" value="عميل"> عميل</label>
+    <label><input type="radio" name="kind" value="تاجر" checked> تاجر</label>
+  </div>
+  <div class="row">
+    <label class="f">اسم العميل <b>*</b><input type="text" id="custName"></label>
+    <label class="f">رقم الهاتف <b>*</b><input type="tel" id="phone" inputmode="tel"></label>
+    <label class="f">رقم المركز <b>*</b><input type="text" id="center"></label>
+  </div>
+  <div class="row"><label class="f">اسم الموظف <b>*</b><input type="text" id="emp"></label></div>
+  <div id="qs"></div>
+  <div class="q" style="margin-top:22px">اقتراح الخدمة التي ترغب في تواجدها معنا قريبًا</div>
+  <textarea id="sugg" rows="2" placeholder="من وجهة نظرك أي أكثر خدمة ترغب في تواجدها معنا عن قريب"></textarea>
+  <div class="q">تقييمك للشركة بشكل عام علمًا بأن 1 أقل تقييم و 10 أعلى تقييم <b>*</b></div>
+  <div class="stars" id="stars"></div>
+  <div class="msg" id="msg"></div>
+  <div style="margin-top:14px"><button class="primary" id="save">حفظ الاستبيان</button></div>
+</div>
+
+<div id="viewData" class="card hide">
+  <div class="stat"><span>عدد السجلات: <b id="cnt">0</b></span><span>متوسط تقييم الشركة: <b id="avg">-</b></span><span id="live"></span></div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="بحث بالاسم أو الهاتف أو المركز أو الموظف">
+    <button class="primary" id="exp">تصدير Excel</button>
+  </div>
+  <div class="tw"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+</div>
+</div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const QS=[
+ {k:"q1",t:"هل تم الرد عليك فور اتصالك؟",o:["نعم","لا","تأخر قليلًا"]},
+ {k:"q2",t:"هل كان الموظف مهذبًا ومتعاونًا؟",o:["نعم","إلى حد ما","لا"]},
+ {k:"q3",t:"هل تم حل مشكلتك بشكل كامل؟",o:["نعم","جزئيًا","لا"]},
+ {k:"q4",t:"ما مدى رضاك عن الخدمة التي حصلت عليها؟",o:["راضٍ جدًا","راضٍ","غير راضٍ"]},
+ {k:"q5",t:"هل واجهت صعوبة في فهم شرح الموظف أو التعليمات؟",o:["نعم","لا"]},
+ {k:"q6",t:"هل لديك اقتراح لتحسين الخدمة؟",o:["نعم","لا"]}
+];
+const $=id=>document.getElementById(id);
+let rating=0, rows=[], db=null;
+
+// build questions
+QS.forEach(q=>{
+  const d=document.createElement("div");
+  const t=document.createElement("div");t.className="q";t.textContent=q.t+" ";
+  const b=document.createElement("b");b.textContent="*";t.appendChild(b);
+  const o=document.createElement("div");o.className="opts";
+  q.o.forEach(v=>{const l=document.createElement("label");const i=document.createElement("input");i.type="radio";i.name=q.k;i.value=v;l.appendChild(i);l.appendChild(document.createTextNode(" "+v));o.appendChild(l)});
+  d.appendChild(t);d.appendChild(o);$("qs").appendChild(d);
+});
+// stars
+function drawStars(){
+  const s=$("stars");s.textContent="";
+  for(let i=1;i<=10;i++){const e=document.createElement("span");e.className="s"+(i<=rating?" on":"");e.textContent="★";e.onclick=()=>{rating=i;drawStars()};s.appendChild(e)}
+  const n=document.createElement("span");n.className="n";n.textContent="("+rating+"/10)";s.appendChild(n);
+}
+drawStars();
+
+// tabs
+function show(v){$("viewForm").classList.toggle("hide",v!=="form");$("viewData").classList.toggle("hide",v!=="data");$("tabForm").classList.toggle("on",v==="form");$("tabData").classList.toggle("on",v==="data")}
+$("tabForm").onclick=()=>show("form");$("tabData").onclick=()=>show("data");
+
+function msg(t,c){const m=$("msg");m.textContent=t;m.className="msg "+(c||"")}
+const val=n=>{const e=document.querySelector('input[name="'+n+'"]:checked');return e?e.value:""};
+
+$("save").onclick=async()=>{
+  const r={kind:val("kind"),custName:$("custName").value.trim(),phone:$("phone").value.trim(),center:$("center").value.trim(),emp:$("emp").value.trim(),sugg:$("sugg").value.trim(),rating:rating,ts:Date.now()};
+  QS.forEach(q=>r[q.k]=val(q.k));
+  if(!r.custName||!r.phone||!r.center||!r.emp||QS.some(q=>!r[q.k])||!rating){msg("من فضلك أكمل كل الحقول المطلوبة (*) واختر التقييم.","err");return}
+  if(!db||!auth||!auth.currentUser){msg("سجّل الدخول أولًا لحفظ البيانات.","err");return}
+  $("save").disabled=true;
+  try{
+    await db.collection("surveys").add(r);
+    msg("تم حفظ الاستبيان بنجاح ✓","ok");
+    ["custName","phone","center","emp","sugg"].forEach(i=>$(i).value="");
+    document.querySelectorAll('#qs input:checked').forEach(i=>i.checked=false);
+    rating=0;drawStars();
+  }catch(e){msg("تعذر الحفظ: "+(e&&e.message||"خطأ"),"err")}
+  $("save").disabled=false;
+};
+
+// table
+const COLS=[["#",null],["التاريخ",r=>new Date(r.ts).toLocaleString("ar-EG")],["النوع",r=>r.kind],["اسم العميل",r=>r.custName],["رقم الهاتف",r=>r.phone],["رقم المركز",r=>r.center],["اسم الموظف",r=>r.emp],
+ ...QS.map(q=>[q.t,r=>r[q.k]]),["اقتراح الخدمة المطلوبة",r=>r.sugg],["تقييم الشركة (من 10)",r=>r.rating]];
+const th=document.createElement("tr");COLS.forEach(c=>{const e=document.createElement("th");e.textContent=c[0];th.appendChild(e)});const dh=document.createElement("th");dh.textContent="حذف";th.appendChild(dh);$("thead").appendChild(th);
+
+function render(){
+  const f=$("q").value.trim().toLowerCase();
+  const list=rows.filter(r=>!f||[r.custName,r.phone,r.center,r.emp].join(" ").toLowerCase().includes(f));
+  const tb=$("tbody");tb.textContent="";
+  list.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    COLS.forEach((c,j)=>{const td=document.createElement("td");td.textContent=j===0?String(list.length-i):String(c[1](r)??"");if(c[0]==="اقتراح الخدمة المطلوبة")td.className="wrapc";tr.appendChild(td)});
+    const td=document.createElement("td");const b=document.createElement("button");b.className="danger";b.textContent="حذف";
+    b.onclick=async()=>{if(confirm("حذف هذا السجل نهائيًا؟")){try{await db.collection("surveys").doc(r.id).delete()}catch(e){alert("لا تملك صلاحية الحذف")}}};
+    td.appendChild(b);tr.appendChild(td);tb.appendChild(tr);
+  });
+  $("cnt").textContent=rows.length;
+  $("avg").textContent=rows.length?(rows.reduce((a,r)=>a+(+r.rating||0),0)/rows.length).toFixed(1):"-";
+}
+$("q").oninput=render;
+
+$("exp").onclick=async()=>{
+  const data=rows.map((r,i)=>{const o={};COLS.forEach((c,j)=>{o[c[0]]=j===0?rows.length-i:(c[1](r)??"")});return o});
+  if(!data.length){alert("لا توجد بيانات للتصدير");return}
+  let file,name,mime;
+  if(window.XLSX){
+    const ws=XLSX.utils.json_to_sheet(data);ws["!cols"]=COLS.map(()=>({wch:22}));
+    const wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
+    XLSX.utils.book_append_sheet(wb,ws,"الاستبيانات");
+    file=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+    name="survey-"+new Date().toISOString().slice(0,10)+".xlsx";
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  }else{
+    const h=COLS.map(c=>c[0]);const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+    file="\\ufeff"+[h.map(esc).join(",")].concat(data.map(o=>h.map(k=>esc(o[k])).join(","))).join("\\n");
+    name="survey-"+new Date().toISOString().slice(0,10)+".csv";mime="text/csv;charset=utf-8";
+  }
+  const url=URL.createObjectURL(new Blob([file],{type:mime}));
+  const link=document.createElement("a");link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+// Firebase cloud database and user accounts: add the Firebase web config below.
+const firebaseConfig={
+ apiKey:"AIzaSyB7glXXENZ1f9YiP9_MK-Cbfu0mY7HlUUs",
+ authDomain:"daya-analysis.firebaseapp.com",
+ projectId:"daya-analysis",
+ storageBucket:"daya-analysis.firebasestorage.app",
+ messagingSenderId:"1045002113390",
+ appId:"1:1045002113390:web:1885b8849e39b789be317f"
+};
+let auth=null,unsubscribeSurveys=null;
+function authMessage(t,c){$("authMsg").textContent=t;$("authMsg").className="msg "+(c||"")}
+function authError(e){
+ const m={"auth/invalid-email":"البريد الإلكتروني غير صحيح","auth/user-not-found":"لا يوجد حساب بهذا البريد",
+ "auth/wrong-password":"كلمة المرور غير صحيحة","auth/invalid-credential":"بيانات الدخول غير صحيحة",
+ "auth/email-already-in-use":"هذا البريد مسجل بالفعل","auth/weak-password":"كلمة المرور يجب ألا تقل عن 6 أحرف",
+ "auth/too-many-requests":"محاولات كثيرة، حاول لاحقًا","auth/network-request-failed":"تحقق من اتصال الإنترنت"};
+ return m[e.code]||e.message||"حدث خطأ";
+}
+function subscribeData(){
+ if(unsubscribeSurveys)unsubscribeSurveys();
+ $("live").textContent="جارٍ تحميل البيانات...";
+ unsubscribeSurveys=db.collection("surveys").orderBy("ts","desc").onSnapshot(s=>{
+  rows=s.docs.map(d=>Object.assign({},d.data(),{id:d.id}));
+  $("live").textContent="● متصل — تحديث مباشر لجميع الأجهزة";render();
+ },e=>{$("live").textContent="⚠ "+authError(e)});
+}
+$("loginBtn").onclick=async()=>{
+ const email=$("authEmail").value.trim(),password=$("authPassword").value;
+ if(!email||!password){authMessage("أدخل البريد الإلكتروني وكلمة المرور","err");return}
+ $("loginBtn").disabled=true;
+ try{await auth.signInWithEmailAndPassword(email,password)}catch(e){authMessage(authError(e),"err")}
+ $("loginBtn").disabled=false;
+};
+$("registerBtn").onclick=async()=>{
+ const email=$("authEmail").value.trim(),password=$("authPassword").value;
+ if(!email||!password){authMessage("أدخل البريد الإلكتروني وكلمة المرور","err");return}
+ if(password.length<6){authMessage("كلمة المرور يجب ألا تقل عن 6 أحرف","err");return}
+ $("registerBtn").disabled=true;
+ try{await auth.createUserWithEmailAndPassword(email,password)}catch(e){authMessage(authError(e),"err")}
+ $("registerBtn").disabled=false;
+};
+$("logoutBtn").onclick=()=>auth.signOut();
+try{
+ if(false){
+  authMessage("يلزم ربط الملف بمشروع Firebase أولًا. بعد إضافة إعدادات المشروع سيعمل التسجيل والحفظ المشترك.","err");
+  $("loginBtn").disabled=true;$("registerBtn").disabled=true;
+ }else{
+  firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  auth.onAuthStateChanged(user=>{
+   $("authPanel").style.display=user?"none":"block";
+   $("appShell").style.display=user?"block":"none";
+   if(user){$("userEmail").textContent=user.email||"حساب مسجل";subscribeData()}
+   else{if(unsubscribeSurveys){unsubscribeSurveys();unsubscribeSurveys=null}rows=[];render()}
+  });
+ }
+}catch(e){authMessage("تعذر بدء الاتصال: "+authError(e),"err")}
+
+</script>
+</body>
+</html>
+`;
