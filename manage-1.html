@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إدارة استبيان رضا العملاء</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#18332d;background:#f2f7f5}*{box-sizing:border-box}body{margin:0;padding:16px}.wrap{max-width:1100px;margin:auto}.card{background:white;border:1px solid #d5e1dc;border-radius:14px;padding:16px;margin:12px 0}h1{font-size:22px;color:#087653}button,.btn{border:1px solid #087653;background:white;color:#087653;border-radius:8px;padding:9px 13px;font:inherit;cursor:pointer}button.primary{background:#087653;color:white}button.danger{border-color:#c33;color:#c33}.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.stats{display:flex;gap:18px;flex-wrap:wrap;color:#536b63}.stats b{color:#17382e}.muted{color:#647a72;font-size:13px}input{font:inherit;padding:9px;border:1px solid #cbd9d3;border-radius:8px;max-width:100%}table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}td,th{border-bottom:1px solid #dce5e1;padding:8px;text-align:right;white-space:nowrap}th{background:#eff5f2;position:sticky;top:0}.tablewrap{overflow:auto;max-height:65vh}.hidden{display:none}.login{max-width:480px;margin:50px auto}.msg{padding:8px 0}.err{color:#b22}.ok{color:#087653}
+</style>
+</head>
+<body><main class="wrap">
+<section id="login" class="card login"><h1>دخول لوحة إدارة البيانات</h1><p class="muted">سجّل الدخول بحسابك المسجل في الموقع.</p>
+<div class="row"><input id="email" type="email" placeholder="البريد الإلكتروني" autocomplete="username"><input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password"><button id="loginBtn" class="primary">دخول</button></div><div id="loginMsg" class="msg"></div></section>
+<section id="app" class="hidden">
+<div class="card"><div class="row" style="justify-content:space-between"><div><h1>لوحة إدارة استبيان رضا العملاء</h1><div id="who" class="muted"></div></div><button id="logout">تسجيل الخروج</button></div>
+<div id="status" class="msg">جارٍ الاتصال...</div><div class="stats"><span>عدد السجلات: <b id="count">0</b></span><span>متوسط التقييم: <b id="average">-</b></span></div></div>
+<div class="card"><div class="row"><input id="search" type="search" placeholder="بحث بالاسم أو الهاتف أو المركز أو الموظف" style="flex:1;min-width:220px"><button id="export" class="primary">تصدير Excel</button><label class="btn" id="importLabel">استيراد Excel / CSV <input id="importFile" type="file" accept=".xlsx,.xls,.csv" hidden></label></div><p class="muted">الاستيراد يضيف السجلات الجديدة ولا يحذف السجلات الموجودة. أدوات الاستيراد والتصدير والحذف تظهر لحساب المدير فقط.</p><div id="adminMsg" class="msg"></div></div>
+<div class="card"><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>اسم العميل</th><th>الهاتف</th><th>المركز</th><th>الموظف</th><th>التقييم</th><th>الإجراء</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+</section></main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyB7glXXENZ1f9YiP9_MK-Cbfu0mY7HlUUs",authDomain:"daya-analysis.firebaseapp.com",projectId:"daya-analysis",storageBucket:"daya-analysis.firebasestorage.app",messagingSenderId:"1045002113390",appId:"1:1045002113390:web:1885b8849e39b789be317f"};
+const ADMIN_UID="Guqph2uUJcSPtUfjrI1JqRftK6v1";
+firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.firestore();
+const $=id=>document.getElementById(id);let records=[],stop=null,isAdmin=false;
+const fields=["kind","custName","phone","center","emp","q1","q2","q3","q4","q5","q6","sugg","rating","ts"];
+const headers=["النوع","اسم العميل","رقم الهاتف","رقم المركز","اسم الموظف","س1","س2","س3","س4","س5","س6","الاقتراح","التقييم","التاريخ"];
+const showMsg=(id,t,cls="")=>{$(id).textContent=t;$(id).className="msg "+cls};
+$("loginBtn").onclick=async()=>{showMsg("loginMsg","جارٍ تسجيل الدخول...");try{await auth.signInWithEmailAndPassword($("email").value.trim(),$("password").value)}catch(e){showMsg("loginMsg",e.message,"err")}};
+$("logout").onclick=()=>auth.signOut();
+function render(){
+ const q=$("search").value.trim().toLowerCase();
+ const list=records.filter(r=>!q||[r.custName,r.phone,r.center,r.emp].join(" ").toLowerCase().includes(q));
+ $("count").textContent=records.length;
+ $("average").textContent=records.length?(records.reduce((a,r)=>a+(+r.rating||0),0)/records.length).toFixed(1):"-";
+ const tb=$("tbody");tb.textContent="";
+ list.forEach(r=>{
+  const tr=document.createElement("tr");
+  [r.ts?new Date(r.ts).toLocaleString("ar-EG"):"",r.kind,r.custName,r.phone,r.center,r.emp,r.rating].forEach(v=>{const td=document.createElement("td");td.textContent=v??"";tr.appendChild(td)});
+  const td=document.createElement("td");
+  if(isAdmin){const b=document.createElement("button");b.className="danger";b.textContent="حذف";b.onclick=async()=>{if(confirm("تأكيد حذف السجل نهائيًا؟"))try{await db.collection("surveys").doc(r.id).delete()}catch(e){alert("فشل الحذف: "+e.message)}};td.appendChild(b)}else td.textContent="—";
+  tr.appendChild(td);tb.appendChild(tr);
+ });
+}
+$("search").oninput=render;
+function exportData(){
+ if(!isAdmin){showMsg("adminMsg","هذه الخاصية للمدير فقط","err");return}
+ if(!records.length){showMsg("adminMsg","لا توجد بيانات للتصدير","err");return}
+ const data=records.map(r=>{const o={};fields.forEach((f,i)=>o[headers[i]]=r[f]??"");return o});
+ const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,"الاستبيانات");XLSX.writeFile(wb,"survey-export.xlsx");
+}
+$("export").onclick=exportData;
+$("importFile").onchange=async ev=>{
+ const file=ev.target.files[0];if(!file)return;
+ if(!isAdmin){showMsg("adminMsg","الاستيراد للمدير فقط","err");return}
+ try{
+  const wb=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});
+  const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});let added=0;
+  for(const row of raw){
+   const pick=(en,ar)=>row[en]!==undefined?row[en]:row[ar];
+   const r={kind:pick("kind","النوع")||"",custName:pick("custName","اسم العميل")||"",phone:String(pick("phone","رقم الهاتف")||""),center:String(pick("center","رقم المركز")||""),emp:pick("emp","اسم الموظف")||"",q1:pick("q1","س1")||"",q2:pick("q2","س2")||"",q3:pick("q3","س3")||"",q4:pick("q4","س4")||"",q5:pick("q5","س5")||"",q6:pick("q6","س6")||"",sugg:pick("sugg","الاقتراح")||"",rating:Number(pick("rating","التقييم"))||0,ts:Date.now()};
+   if(!r.custName&&!r.phone)continue;
+   await db.collection("surveys").add(r);added++;
+  }
+  showMsg("adminMsg","تم استيراد "+added+" سجل جديد بنجاح","ok");
+ }catch(e){showMsg("adminMsg","تعذر الاستيراد: "+e.message,"err")}finally{ev.target.value=""}
+};
+auth.onAuthStateChanged(user=>{
+ if(stop){stop();stop=null}
+ $("login").classList.toggle("hidden",!!user);$("app").classList.toggle("hidden",!user);
+ if(!user){records=[];return}
+ isAdmin=user.uid===ADMIN_UID;
+ $("who").textContent="الحساب: "+(user.email||"")+" — "+(isAdmin?"مدير":"موظف");
+ $("export").classList.toggle("hidden",!isAdmin);$("importLabel").classList.toggle("hidden",!isAdmin);
+ showMsg("status","جارٍ تحميل البيانات...");
+ stop=db.collection("surveys").orderBy("ts","desc").onSnapshot(s=>{
+  records=s.docs.map(d=>({...d.data(),id:d.id}));
+  showMsg("status","● متصل — التحديثات تظهر تلقائيًا","ok");render();
+ },e=>showMsg("status","تعذر تحميل البيانات: "+e.message,"err"));
+});
+</script></body></html>
