@@ -19,28 +19,31 @@ iframe.on{display:block}
 </style>
 </head>
 <body>
-<nav>
- <b>لوحات التحليل</b>
- <button id="bS" data-t="survey">📋 استبيان رضا العملاء</button>
- <button id="bD" data-t="downtime">📉 تحليل الداون تايم</button>
-</nav>
-<main>
- <iframe id="fS" title="استبيان رضا العملاء" data-src="survey.html"></iframe>
- <iframe id="fD" title="تحليل الداون تايم" data-src="downtime.html"></iframe>
-</main>
+<nav id="nav"><b>لوحات التحليل</b></nav>
+<main id="main"></main>
 <script>
-const tabs={survey:{b:document.getElementById("bS"),f:document.getElementById("fS")},downtime:{b:document.getElementById("bD"),f:document.getElementById("fD")}};
+const DEFAULT=[{id:"survey",title:"استبيان رضا العملاء",icon:"📋",file:"survey.html"},{id:"downtime",title:"تحليل الداون تايم",icon:"📉",file:"downtime.html"}];
+const nav=document.getElementById("nav"),main=document.getElementById("main"),tabs={};let order=[];
+function build(list){
+ list.forEach(p=>{
+  if(!p||!p.id||!p.file||tabs[p.id])return;
+  const b=document.createElement("button");b.textContent=(p.icon?p.icon+" ":"")+(p.title||p.id);b.onclick=()=>show(p.id);nav.appendChild(b);
+  const f=document.createElement("iframe");f.title=p.title||p.id;f.dataset.src=p.file;main.appendChild(f);
+  tabs[p.id]={b,f};order.push(p.id);
+ });
+}
 function show(t){
- if(!tabs[t])t="survey";
- for(const k in tabs){
-  const on=k===t;tabs[k].b.classList.toggle("on",on);tabs[k].f.classList.toggle("on",on);
-  if(on&&!tabs[k].f.src)tabs[k].f.src=tabs[k].f.dataset.src;
- }
+ if(!tabs[t])t=order[0];
+ for(const k in tabs){const on=k===t;tabs[k].b.classList.toggle("on",on);tabs[k].f.classList.toggle("on",on);if(on&&!tabs[k].f.getAttribute("src"))tabs[k].f.src=tabs[k].f.dataset.src}
  try{history.replaceState(null,"","#"+t)}catch(e){location.hash=t}
 }
-tabs.survey.b.onclick=()=>show("survey");tabs.downtime.b.onclick=()=>show("downtime");
-show((location.hash||"").slice(1)||"survey");
+async function init(){
+ let list=DEFAULT;
+ try{const r=await fetch("panels.json?"+Date.now(),{cache:"no-store"});if(r.ok){const j=await r.json();if(Array.isArray(j)&&j.length)list=j}}catch(e){}
+ build(list);show((location.hash||"").slice(1));
+}
 window.addEventListener("hashchange",()=>show((location.hash||"").slice(1)));
+init();
 </script>
 </body>
 </html>

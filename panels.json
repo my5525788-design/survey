@@ -1,0 +1,4 @@
+[
+  { "id": "survey",   "title": "استبيان رضا العملاء", "icon": "📋", "file": "survey.html" },
+  { "id": "downtime", "title": "تحليل الداون تايم",   "icon": "📉", "file": "downtime.html" }
+]
