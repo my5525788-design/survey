@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syoula | Executive Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#211421;--panel:#39243a;--panel2:#50334f;--muted:#c8b5c8;--gold:#efbd55;--teal:#19c7aa;--blue:#54b6df;--pink:#d49abf;--white:#fff8ff;--red:#f07c87}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#54354f 0,transparent 34%),var(--bg);color:var(--white);font-family:Tahoma,Arial,sans-serif}
+header{padding:24px 4vw 16px;display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:15px}.logo{width:58px;height:58px;border:2px solid var(--gold);border-radius:16px;display:grid;place-items:center;color:var(--gold);font-size:27px}.brand h1{margin:0;color:var(--gold);font-size:27px}.brand p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid #765674;background:#674565;color:white;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:bold}.btn.primary{background:var(--gold);color:#2b1b2b;border:0}.btn:hover{filter:brightness(1.12)}
+main{padding:0 4vw 40px}.tabs{display:flex;gap:8px;overflow:auto;padding:10px 0 18px}.tab{white-space:nowrap;border:1px solid #765674;background:#38253a;color:#eadbea;padding:11px 17px;border-radius:11px;cursor:pointer}.tab.active{background:var(--gold);color:#2b1b2b;font-weight:bold}
+.headline{display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap;margin:6px 0 16px}.headline h2{margin:0;color:var(--gold);font-size:23px}.headline p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:15px}.card{background:linear-gradient(145deg,#684765,#50334f);border:1px solid #805c7d;border-radius:19px;padding:18px;box-shadow:0 12px 28px #120b1640;min-width:0}.metric{grid-column:span 3;min-height:130px}.metric .label{color:#e4cde1;font-size:13px}.metric strong{display:block;color:var(--gold);font-size:36px;margin-top:10px}.metric small{color:#e2cfe0}.wide{grid-column:span 8}.side{grid-column:span 4}.half{grid-column:span 6}.full{grid-column:span 12}.card h3{margin:0 0 14px;color:var(--gold);font-size:16px}.chartbox{height:270px;position:relative}.legendlist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}.legendlist div{display:flex;justify-content:space-between;background:#38243a88;border-radius:9px;padding:9px 11px;color:#f8eaf5;font-size:13px}.legendlist b{color:var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 9px;text-align:right;border-bottom:1px solid #ffffff20}th{color:var(--gold)}td{color:#fff5ff}
+.note{color:var(--muted);font-size:11px;line-height:1.7;margin-top:12px}.empty{padding:30px;text-align:center;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#100a12c9;display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.modal.open{display:flex}.modalbox{width:min(460px,100%);background:#432d43;border:1px solid #8a6684;border-radius:18px;padding:22px}.modalbox h3{color:var(--gold);margin-top:0}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:13px;color:#e7d4e5}.field input,.field select{padding:11px;border:1px solid #94758f;background:#2d1d2e;color:white;border-radius:9px}
+footer{text-align:center;color:#927c91;font-size:11px;padding:20px}
+@media(max-width:850px){.metric{grid-column:span 6}.wide,.side,.half{grid-column:span 12}.chartbox{height:240px}}
+@media(max-width:480px){header{padding:18px 4vw}.metric{grid-column:span 6;padding:13px}.metric strong{font-size:28px}.card{padding:14px}.brand h1{font-size:22px}.btn{font-size:11px;padding:9px}}
+</style></head>
+<body>
+<header>
+ <div class="brand"><div class="logo">S</div><div><h1>SYOULA DASHBOARD</h1><p>Executive performance & monthly follow-up</p></div></div>
+ <div class="actions">
+  <button class="btn" onclick="document.getElementById('importFile').click()">استيراد Excel</button>
+  <button class="btn" onclick="exportExcel()">تصدير Excel</button>
+  <button class="btn primary" onclick="openModal()">＋ إضافة شهر</button>
+  <input id="importFile" type="file" accept=".xlsx,.xls" hidden onchange="importExcel(event)">
+ </div>
+</header>
+<main>
+ <nav class="tabs" id="tabs"></nav>
+ <div class="headline"><div><h2 id="viewTitle">الملخص العام</h2><p id="viewSub">مقارنة أداء الشهور والنتائج المسجلة</p></div><div class="note">يمكنك استيراد ملف Excel محدث أو إضافة شهر جديد، ثم تصدير نسخة Excel.</div></div>
+ <section class="grid" id="dashboard"></section>
+</main>
+<footer>SY OULA • Dashboard preview • البيانات المعروضة مبنية على ملف Excel المرفق</footer>
+<div class="modal" id="monthModal"><div class="modalbox">
+ <h3>إضافة ملخص شهر جديد</h3>
+ <div class="field"><label>اسم الشهر</label><input id="monthName" placeholder="مثال: November"></div>
+ <div class="field"><label>Interested</label><input id="interested" type="number" min="0" value="0"></div>
+ <div class="field"><label>Not Interested</label><input id="notInterested" type="number" min="0" value="0"></div>
+ <div class="field"><label>Unreached</label><input id="unreached" type="number" min="0" value="0"></div>
+ <div class="actions"><button class="btn primary" onclick="addMonth()">حفظ الشهر</button><button class="btn" onclick="closeModal()">إلغاء</button></div>
+ <p class="note">الشهر المضاف يُحفظ في هذا المتصفح، ويمكن تضمينه في ملف Excel عند التصدير.</p>
+</div></div>
+<script>
+const originalMonths=[
+ {name:'August',items:[['Interested',41],['Not Interested',30],['Unreached',47],['Reached',71]]},
+ {name:'September',items:[['Interested',82],['Not Interested',147],['Unreached',335]]},
+ {name:'October',items:[['Interested',32],['Not Interested',154],['Unreached',241]]}
+];
+const regions=[['الإسكندرية',2],['الأقصر',1],['البحيرة',13],['الجيزة',1],['الدقهلية',5],['السويس',2],['الغربية',128],['القاهرة',3],['القليوبية',1],['المنوفية',76],['بني سويف',1],['سوهاج',2],['طنطا',4],['مرسى مطروح',1]];
+let months=JSON.parse(localStorage.getItem('syoula_months')||'null')||originalMonths;
+let current='all', chartRefs=[];
+const colors=['#19c7aa','#54b6df','#efbd55','#d49abf','#f07c87'];
+const total=m=>m.items.reduce((s,x)=>s+Number(x[1]||0),0);
+function save(){localStorage.setItem('syoula_months',JSON.stringify(months))}
+function drawTabs(){let t=document.getElementById('tabs');t.innerHTML='';[['all','الملخص العام'],...months.map((m,i)=>[String(i),m.name]),['regions','المحافظات']].forEach(([id,label])=>{let b=document.createElement('button');b.className='tab '+(current===id?'active':'');b.textContent=label;b.onclick=()=>{current=id;render()};t.appendChild(b)})}
+function metric(label,value,sub){return `<div class="card metric"><div class="label">${label}</div><strong>${value.toLocaleString('en-US')}</strong><small>${sub||''}</small></div>`}
+function chartCard(id,title,cls='half'){return `<div class="card ${cls}"><h3>${title}</h3><div class="chartbox"><canvas id="${id}"></canvas></div></div>`}
+function makeChart(id,type,labels,datasets,opts={}){let el=document.getElementById(id);if(!el)return;let c=new Chart(el,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#f7eaf5',font:{family:'Tahoma'}}}},scales:type==='doughnut'?{}:{x:{ticks:{color:'#ead9e8'},grid:{color:'#ffffff12'}},y:{beginAtZero:true,ticks:{color:'#ead9e8'},grid:{color:'#ffffff18'}}},...opts}});chartRefs.push(c)}
+function render(){chartRefs.forEach(c=>c.destroy());chartRefs=[];drawTabs();let d=document.getElementById('dashboard');let title=document.getElementById('viewTitle'),sub=document.getElementById('viewSub');
+ if(current==='regions'){title.textContent='توزيع الحسابات حسب المحافظة';sub.textContent='بيانات ورقة Sheet2 من ملف Excel';let sum=regions.reduce((a,b)=>a+b[1],0);d.innerHTML=metric('إجمالي الحسابات',sum,'حسب جدول المحافظات')+`<div class="card full"><h3>تفاصيل المحافظات</h3><table><thead><tr><th>المحافظة</th><th>عدد الحسابات</th><th>النسبة</th></tr></thead><tbody>${regions.slice().sort((a,b)=>b[1]-a[1]).map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${(r[1]/sum*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>`;return}
+ if(current==='all'){title.textContent='الملخص العام';sub.textContent='مقارنة نتائج أشهر August وSeptember وOctober';let grand=months.reduce((a,m)=>a+total(m),0),int=months.reduce((a,m)=>a+(m.items.find(x=>x[0].toLowerCase().includes('interest')&&!x[0].toLowerCase().includes('not'))?.[1]||0),0),not=months.reduce((a,m)=>a+(m.items.find(x=>x[0].toLowerCase().includes('not'))?.[1]||0),0),un=months.reduce((a,m)=>a+(m.items.find(x=>x[0].toLowerCase().includes('unreach'))?.[1]||0),0);
+ d.innerHTML=metric('إجمالي الحالات',grand,'مجموع الشهور المسجلة')+metric('Interested',int,'مهتم')+metric('Not Interested',not,'غير مهتم')+metric('Unreached',un,'لم يتم الوصول')+chartCard('monthlyChart','إجمالي الحالات حسب الشهر','wide')+chartCard('statusChart','توزيع الحالات الإجمالي','side')+`<div class="card full"><h3>مقارنة شهرية تفصيلية</h3><table><thead><tr><th>الشهر</th><th>Interested</th><th>Not Interested</th><th>Unreached</th><th>إجمالي الشهر</th></tr></thead><tbody>${months.map(m=>{let get=k=>m.items.find(x=>x[0].toLowerCase().replaceAll(' ','').includes(k))?.[1]||0;return `<tr><td>${m.name}</td><td>${get('interested')}</td><td>${get('notinterested')}</td><td>${get('unreached')}</td><td>${total(m)}</td></tr>`}).join('')}</tbody></table><p class="note">ملاحظة: شهر August يحتوي أيضًا على بند Reached كما ورد في الملف الأصلي؛ لم يتم دمجه مع أي حالة أخرى.</p></div>`;
+ makeChart('monthlyChart','bar',months.map(m=>m.name),[{label:'Interested',data:months.map(m=>m.items.find(x=>x[0].toLowerCase().includes('interest')&&!x[0].toLowerCase().includes('not'))?.[1]||0),backgroundColor:colors[0]},{label:'Not Interested',data:months.map(m=>m.items.find(x=>x[0].toLowerCase().includes('not'))?.[1]||0),backgroundColor:colors[2]},{label:'Unreached',data:months.map(m=>m.items.find(x=>x[0].toLowerCase().includes('unreach'))?.[1]||0),backgroundColor:colors[1]}]);
+ makeChart('statusChart','doughnut',['Interested','Not Interested','Unreached'],[{data:[int,not,un],backgroundColor:colors,borderWidth:0}]);return}
+ let m=months[Number(current)];title.textContent='Dashboard • '+m.name;sub.textContent='تحليل تفصيلي لنتائج الشهر';let sum=total(m);d.innerHTML=metric('إجمالي الحالات',sum,'إجمالي الشهر')+m.items.map((x,i)=>metric(x[0],Number(x[1]),'حالة مسجلة')).join('')+chartCard('monthChart','توزيع الحالات','wide')+chartCard('monthDonut','نسب الحالات','side')+`<div class="card full"><h3>تفاصيل الشهر</h3><table><thead><tr><th>الحالة</th><th>العدد</th><th>النسبة</th></tr></thead><tbody>${m.items.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${(x[1]/sum*100).toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>`;
+ makeChart('monthChart','bar',m.items.map(x=>x[0]),[{label:m.name,data:m.items.map(x=>x[1]),backgroundColor:colors}]);makeChart('monthDonut','doughnut',m.items.map(x=>x[0]),[{data:m.items.map(x=>x[1]),backgroundColor:colors,borderWidth:0}]);
+}
+function openModal(){document.getElementById('monthModal').classList.add('open')}function closeModal(){document.getElementById('monthModal').classList.remove('open')}
+function addMonth(){let name=document.getElementById('monthName').value.trim();if(!name){alert('اكتب اسم الشهر أولاً');return}if(months.some(m=>m.name.toLowerCase()===name.toLowerCase())){alert('هذا الشهر موجود بالفعل');return}months.push({name,items:[['Interested',+document.getElementById('interested').value||0],['Not Interested',+document.getElementById('notInterested').value||0],['Unreached',+document.getElementById('unreached').value||0]]});save();current=String(months.length-1);closeModal();render()}
+function exportExcel(){let wb=XLSX.utils.book_new();let rows=[['Month','Status','Count']];months.forEach(m=>m.items.forEach(x=>rows.push([m.name,x[0],x[1]])));XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Monthly Summary');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['المحافظة','عدد الحسابات'],...regions]),'Regions');XLSX.writeFile(wb,'Syoula_Dashboard_Data.xlsx')}
+function importExcel(e){
+ let f=e.target.files[0];if(!f)return;let r=new FileReader();
+ r.onload=ev=>{try{
+  let wb=XLSX.read(ev.target.result,{type:'array'}),found=[];
+  wb.SheetNames.forEach(sn=>{
+   let a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null});
+   if(a.some(row=>String(row[0]||'').toLowerCase().includes('row labels')) || /region|محافظ/i.test(sn))return;
+   let header=a.findIndex(row=>String(row[0]||'').toLowerCase()==='month' && String(row[1]||'').toLowerCase()==='status');
+   if(header>=0){
+    let byMonth={};a.slice(header+1).forEach(row=>{if(row[0]&&row[1]&&Number.isFinite(Number(row[2]))){(byMonth[row[0]]??=[]).push([String(row[1]),Number(row[2])])}});
+    Object.entries(byMonth).forEach(([name,items])=>found.push({name,items}));return;
+   }
+   let sections=[],active=null;
+   a.forEach(row=>{
+    let first=String(row[0]??'').trim(),second=row[1];
+    let heading=first.match(/summary\s+syoula\s+of\s+(.+)/i);
+    if(heading){active={name:heading[1].trim(),items:[]};sections.push(active);return}
+    if(first && typeof second==='number' && !/total|row labels|feedback|status|count/i.test(first)){
+      if(!active){active={name:sn,items:[]};sections.push(active)}
+      active.items.push([first,second]);
+    }
+   });
+   sections.filter(x=>x.items.length).forEach(x=>found.push(x));
+  });
+  if(!found.length)throw new Error('لم يتم العثور على جداول شهرية بصيغة (الشهر، الحالة، العدد) أو (الحالة، العدد).');
+  months=found;save();current='all';render();alert('تم استيراد البيانات بنجاح');
+ }catch(err){alert('تعذر قراءة الملف: '+err.message)}e.target.value=''};
+ r.readAsArrayBuffer(f)
+}
+render();
+</script></body></html>
