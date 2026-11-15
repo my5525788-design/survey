@@ -104,4 +104,77 @@ function importExcel(e){
  r.readAsArrayBuffer(f)
 }
 render();
-</script></body></html>
+</script>
+<div id="cloudBar" style="position:fixed;left:8px;bottom:8px;z-index:9999;background:#39243a;color:#fff8ff;border:1px solid #765674;border-radius:14px;padding:6px 12px;font:12px Tahoma,Arial,sans-serif;max-width:92vw;line-height:1.6">
+ <div id="cloudStatus">…</div><div id="cloudSave" style="color:#c8b5c8"></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+const FBCFG={apiKey:"AIzaSyB7glXXENZ1f9YiP9_MK-Cbfu0mY7HlUUs",authDomain:"daya-analysis.firebaseapp.com",projectId:"daya-analysis",storageBucket:"daya-analysis.firebasestorage.app",messagingSenderId:"1045002113390",appId:"1:1045002113390:web:1885b8849e39b789be317f"};
+const $=id=>document.getElementById(id);
+const setStatus=t=>{$("cloudStatus").textContent=t};
+const setSave=(t,bad)=>{const e=$("cloudSave");e.textContent=t;e.style.color=bad?"#f07c87":"#7fe3c4"};
+const hhmm=()=>new Date().toLocaleTimeString("en-GB");
+let auth,fdb;
+try{firebase.initializeApp(FBCFG);auth=firebase.auth();fdb=firebase.firestore();auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){setStatus("⚠ "+e.message);return}
+const ref=()=>fdb.collection("syoula").doc("months");
+const localAt=()=>+(localStorage.getItem("syoula_at")||0);
+let unsub=null,lastJson="",busy=false,again=false;
+
+async function push(force){
+ if(!auth.currentUser)return;
+ if(busy){again=true;return}
+ busy=true;
+ try{
+  do{
+   again=false;
+   const json=JSON.stringify(months);
+   if(json===lastJson&&!force)break;
+   force=false;
+   const at=Math.max(Date.now(),localAt());
+   setSave("↑ جارٍ الحفظ في السحابة…");
+   await ref().set({data:json,by:auth.currentUser.email||"",at:at});
+   const chk=await ref().get({source:"server"});
+   if(!chk.exists||chk.data().data!==json)throw new Error("لم يتأكد الحفظ على السيرفر");
+   lastJson=json;
+   localStorage.setItem("syoula_at",String(at));
+   setSave("✔ تم الحفظ في السحابة "+hhmm());
+  }while(again);
+ }catch(e){setSave("✖ فشل الحفظ: "+(e.code||"")+" "+(e.message||e),true)}
+ busy=false;
+}
+const _save=save;
+save=function(){_save();localStorage.setItem("syoula_at",String(Date.now()));push()};
+
+function start(){
+ if(unsub)unsub();
+ setStatus("جارٍ المزامنة…");
+ unsub=ref().onSnapshot(s=>{
+  if(s.metadata.hasPendingWrites)return;
+  setStatus("● متصل — مزامنة مباشرة");
+  if(!s.exists){push(true);return}
+  const d=s.data(),json=d.data;
+  if(json===lastJson)return;
+  if(json===JSON.stringify(months)){lastJson=json;return}
+  if((+d.at||0)<localAt()){push(true);return}
+  try{
+   const arr=JSON.parse(json);
+   if(Array.isArray(arr)&&arr.length){
+    lastJson=json;months=arr;
+    localStorage.setItem("syoula_months",json);localStorage.setItem("syoula_at",String(+d.at||Date.now()));
+    if(current!=="all"&&current!=="regions"&&!months[Number(current)])current="all";
+    render();setSave("⬇ تم تحديث البيانات من السحابة "+hhmm());
+   }
+  }catch(e){console.error(e)}
+ },e=>setStatus("⚠ "+(e.code==="permission-denied"?"permission-denied — راجع القواعد في Firebase":e.message)));
+}
+auth.onAuthStateChanged(u=>{
+ if(u)start();
+ else{if(unsub){unsub();unsub=null}lastJson="";setStatus("غير متصل بالسحابة — سجّل الدخول من الصفحة الرئيسية")}
+});
+})();
+</script>
+</body></html>
