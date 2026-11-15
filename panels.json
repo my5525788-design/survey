@@ -1,4 +1,5 @@
 [
-  { "id": "survey",   "title": "استبيان رضا العملاء", "icon": "📋", "file": "survey.html" },
-  { "id": "downtime", "title": "تحليل الداون تايم",   "icon": "📉", "file": "downtime.html" }
+  { "id": "survey",   "title": "استبيان رضا العملاء", "icon": "📋", "file": "survey.html",           "v": 3 },
+  { "id": "downtime", "title": "تحليل الداون تايم",   "icon": "📉", "file": "downtime.html",         "v": 3 },
+  { "id": "syoula",   "title": "Syoula",             "icon": "📊", "file": "syoula_dashboard.html", "v": 3 }
 ]
